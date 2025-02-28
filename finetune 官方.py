@@ -20,7 +20,7 @@ from accelerate.utils import DistributedType
 
 IGNORE_TOKEN_ID = LabelSmoother.ignore_index
 
-
+# https://github.com/QwenLM/Qwen/blob/main/finetune.py
 @dataclass
 class ModelArguments:
     model_name_or_path: Optional[str] = field(default="Qwen/Qwen-7B")
