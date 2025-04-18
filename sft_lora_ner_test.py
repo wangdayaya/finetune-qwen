@@ -4,16 +4,45 @@ import torch
 from peft import PeftModel
 from transformers import  AutoTokenizer, AutoModelForCausalLM
 
+SYSTEM_CONTENT = """请根据用户输入的地址完成地址节提取任务, 并以JSON格式输出。地址标签的具体含义如下，请在下面指定的标签范围内进行地址节解析：
+- province：表示省份。
+- city：表示城市。
+- county：表示区县。
+- town：表示街道。
+- community：表示社区或者自然村。
+- village：表示自然村。
+- group：表示自然村下的组，如“xx村1组”，“xx村二组”。
+- street：表示街、路、巷、弄堂。
+- doorplate：表示门牌号，如“32号”。
+- subdistrict：表示小区名、单位名。
+- building：表示建筑物名称、人名、居民家、辅房、厂房、附房。
+- building_num：表示楼幢号，如“1幢”、“2栋”、“3-2幢楼”、“4座”。
+- unit：表示单元，如“3单元”。
+- floor：表示楼层，如 “2层”。
+- room：表示房间号，如 “1001室”。
+- attachment：表示附属物或者城市部件名称，如公交站、路灯杆、地铁站口、监控等。
+
+示例：
+Q：杭州市萧山区益农镇利围村浙东钢管制品公司
+A：{'province': '浙江省', 'city': '杭州市', 'county': '萧山区', 'town': '益农镇', 'community': '利围村', 'building': '浙东钢管制品公司'}
+
+Q：杭州市萧山区城厢街道湖头陈社区湖园三路北之江纺织有限公司15号楼1单元301室
+A：{'province': '浙江省', 'city': '杭州市', 'county': '萧山区', 'town': '城厢街道', 'community': '湖头陈社区', 'street': '湖园三路', 'building': '北之江纺织有限公司', 'building_num': '15号楼', 'unit': '1单元', 'room': '301室'}
+
+Q：杭州市临安区青山湖街道青南村闵家坞潘治源
+A：{'province': '浙江省', 'city': '杭州市', 'county': '临安区', 'town': '青山湖街道', 'community': '青南村', 'village': '闵家坞', 'building': '潘治源'}
+"""
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-base_model_name = "D:\Qwen2.5-7B-Instruct"
+base_model_name = "D:\Qwen2.5-3B-Instruct"
 model = AutoModelForCausalLM.from_pretrained(base_model_name)
 tokenizer = AutoTokenizer.from_pretrained(base_model_name)
 
 # 加载LoRA模型的权重
-lora_model_path = r"sft-7B-lora-ner/checkpoint-2013"
-model = PeftModel.from_pretrained(model, lora_model_path)
-model.to(device)
-model.eval()
+# lora_model_path = r"D:\PycharmProjects\finetune qwen\address_ner\output_qwen_merged"
+# model = PeftModel.from_pretrained(model, lora_model_path)
+# model.to(device)
+# model.eval()
 
 
 # ner
@@ -43,13 +72,13 @@ model.eval()
 while True:
     prompt = input("user:")
     messages = [
-        {"role": "system", "content": "你是一个有帮助的智能助手"},
+        {"role": "system", "content": SYSTEM_CONTENT},
         {"role": "user", "content": prompt}
     ]
     text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
     model_inputs = tokenizer([text], return_tensors="pt").to(device)
     start = time.time()
-    generated_ids = model.generate(**model_inputs, max_new_tokens=512, pad_token_id=151643, eos_token_id=[151645, 151643])
+    generated_ids = model.generate(**model_inputs, max_new_tokens=110, pad_token_id=151643, eos_token_id=[151645, 151643])
     print(f"推理耗时{time.time() - start}")
     generated_ids = [output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids) ]
     response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]

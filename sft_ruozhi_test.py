@@ -18,7 +18,7 @@ def main():
     cpu_before = psutil.cpu_percent()
 
     tokenizer_path = "D:\Qwen2.5-0.5B-Instruct"
-    train_model_path = "sft-0.5B-full-ruozhi"
+    train_model_path = "D:\Qwen2.5-0.5B-Instruct"
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, trust_remote_code=True)
     model = AutoModelForCausalLM.from_pretrained(train_model_path, trust_remote_code=True)
     model.to(device)

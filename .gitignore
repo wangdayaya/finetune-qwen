@@ -1,0 +1,6 @@
+/data/result.csv
+/data/
+/0.5B_sft_address_ner/
+/解析标准地址/3B_sft_address_ner/
+/解析标准地址/output_qwen_merged/
+*.txt
